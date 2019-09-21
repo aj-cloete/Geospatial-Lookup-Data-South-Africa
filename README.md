@@ -10,7 +10,7 @@ Interacting with geospatial or location information within a relational database
 
 This repository provides a neat alternative.
 
-![South Africa Grid](images/South_Africa_grid_example_1km.png)
+![South Africa Grid](images/South_Africa_grid_example_1000m.png)
 
 ## Methodology
 1. Generate a grid over the country of interest (South Africa in this repository but feel free to fork!)
