@@ -34,3 +34,13 @@ SELECT
 FROM input_data
 ```
 > where accuracy_m is the accuracy in meters, i.e. ` accuracy_m in (1, 10, 100, 1000, 10000) `
+
+## Resources
+This methodology requires access to shapefile data about your continent/country/city of interest.  Specifically, the data needs to contain a shapefile - a set of coordinates which define the boundaries of an area - which will be used to classify the generated grid of points.
+Some useful resources in this regard:
+- [Geopandas](http://geopandas.org) (carefully read through the [installation instructions](http://geopandas.org/install.html) and pay attention to its dependencies)
+- [geonames](http://www.geonames.org) (an excellent open resource for worldwide geospatial datasets)
+- [top open geospatial data](https://gisgeography.com/best-free-gis-data-sources-raster-vector/) (provides links to other sources)
+- [South African Municipal Demarcation Board](http://www.demarcation.org.za) (specifically the [data portal](http://dataportal-mdb-sa.opendata.arcgis.com) )
+
+
