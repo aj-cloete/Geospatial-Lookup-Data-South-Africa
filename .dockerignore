@@ -1,0 +1,7 @@
+data/*
+.ipynb_checkpoints*
+.git/*
+.gitignore
+docker_data/*
+images/*
+*README*.md*

@@ -1,0 +1,6 @@
+data*
+*.env*
+*.ipynb*
+*__pycache__*
+processed_data/*
+docker_data*
