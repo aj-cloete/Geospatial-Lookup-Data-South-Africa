@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import geopandas as gpd
+import os
 
 def _check_chunksize(chunksize, df_size):
     '''Check that the chunksize is reasonable given the size of the data'''
@@ -158,17 +159,16 @@ def save_data(df, filename='filename.json.gz', directory='processed_data', colum
     If dictionary is passed in columns, the keys will be used to filter the df 
     while the (key:value) pairs will be used to rename the columns
     '''
-    if not isinstance(columns, dict):
-        if not isinstance(columns, list):
-            df = df[list(columns)]
-    else:
-        df = df[columns.keys()]
-        df = df.rename(columns=columns)
+    if columns:
+        if not isinstance(columns, dict):
+            if not isinstance(columns, list):
+                df = df[list(columns)]
+        else:
+            df = df[columns.keys()]
+            df = df.rename(columns=columns)
     df = pd.DataFrame(df)
-    return df
     try:
         # Create target Directory
-        directory='processed_data'
         os.mkdir(directory)
         print(f"Directory {directory} created")
     except FileExistsError:
@@ -176,6 +176,7 @@ def save_data(df, filename='filename.json.gz', directory='processed_data', colum
     full_pathname = os.path.join(directory,filename)
     print(f'Writing file at {full_pathname}')
     df.to_json(full_pathname,orient='records')
+    return df
 
 def process_dataframe(df, geometries, accuracy_m=1000, chunksize=None, verbose=False):
     chunksize = _check_chunksize(chunksize, df.shape[0])

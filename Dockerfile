@@ -9,7 +9,8 @@ RUN set -x \
   && apt-get install -yqq --no-install-recommends apt-utils \
     libspatialindex-dev \
     wget \
-    zip 
+    zip \
+    unzip
 
 RUN pip install --user -U --no-warn-script-location \
   fiona \

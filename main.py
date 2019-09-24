@@ -29,6 +29,7 @@ def load_raw_data():
 
     print('Reading wards')
     geometries = gpd.read_file('data/MDBWard2016.gdb/').set_geometry('geometry')
+    geometries = geometries.drop(columns=[])
     
     print('All files read!')
     
@@ -47,7 +48,7 @@ def extract_names_datasets(located_geonames):
 
 def process_data(accuracy_m=1000, verbose=False):
     geometries, geonames, postal_codes = load_raw_data()
-    points_grid = gh.generate_grid(lats=[-35,-21], longs=[15,34], accuracy_m=accuracy_m, verbose=verbose)
+    points_grid = gh.generate_grid(lats=[-35,-22], longs=[16,33], accuracy_m=accuracy_m, verbose=verbose)
     
     print('\nProcessing the generated grid dataset')
     located_grid = gh.process_dataframe(points_grid, geometries, accuracy_m, verbose=verbose)
@@ -65,7 +66,9 @@ def process_data(accuracy_m=1000, verbose=False):
         'geokey':'geokey',
         'latitude':'latitude',
         'longitude':'longitude'}
-    gh.save_data(located_grid, 'located_grid.json.gz','processed_data',columns=grid_cols)
+    grid = gh.save_data(located_grid, 'located_grid.json.gz','processed_data',columns=grid_cols)
+    wards = grid.drop(columns=['geokey','latitude','longitude']).drop_duplicates()
+    grid = grid[['geokey','ward_id','latitude','longitude']].drop_duplicates()
     
     print('\nProcessing the geonames dataset')
     located_geonames = gh.process_dataframe(geonames, geometries, accuracy_m, verbose=verbose)
@@ -82,14 +85,34 @@ def process_data(accuracy_m=1000, verbose=False):
         'latitude':'latitude',
         'longitude':'longitude',
         }
-    located_geonames = located_geonames[geonames_cols].rename(columns=geonames_cols)
+    located_geonames = located_geonames[list(geonames_cols)]
     located_geonames['desc_long'] = located_geonames['desc_long'].fillna(located_geonames['desc_short'])
     located_geonames = located_geonames.dropna()
-    provinces, districts, towns, suburbs = extract_names_datasets(located_geonames)
-    
+    loc_geo = gh.save_data(located_geonames, 'located_geonames.json.gz','processed_data',columns=geonames_cols)
+    provinces, districts, towns, suburbs = extract_names_datasets(loc_geo)
     
     print('\nProcessing the postal_codes dataset')
     located_postal_codes = gh.process_dataframe(postal_codes, geometries, accuracy_m, verbose=verbose)
+    postal_code_cols = {
+        'postal_code':'postal_code',
+        'place_name':'place_name',
+        'latitude':'latitude',
+        'longitude':'longitude',
+        'geokey':'geokey',
+        'WardID':'ward_id',
+        }
+    postal_codes_dataset = gh.save_data(located_postal_codes,
+                                        'located_postal_codes.json.gz',
+                                        'processed_data',columns=postal_code_cols)
+
+    print('\nSaving datasets')
+    gh.save_data(df=postal_codes_dataset, filename='postal_codes.json.gz', directory='datasets')
+    gh.save_data(df=provinces, filename='provinces.json.gz', directory ='datasets')
+    gh.save_data(df=districts, filename='districts.json.gz', directory ='datasets')
+    gh.save_data(df=towns, filename='towns.json.gz', directory ='datasets')
+    gh.save_data(df=suburbs, filename='suburbs.json.gz', directory ='datasets')
+    gh.save_data(df=wards, filename='wards.json.gz', directory ='datasets')
+    gh.save_data(df=grid, filename='grid.json.gz', directory ='datasets')
     
     print('Done!')
     return (located_grid, located_geonames, located_postal_codes)
