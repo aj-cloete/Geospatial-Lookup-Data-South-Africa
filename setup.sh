@@ -50,7 +50,7 @@ source "${BASEDIR}/capstone/bin/activate"
 # Install the required packages
 pip install -r requirements.txt
 
-/bin/bash "${BASEDIR}/get_data.sh"
+/bin/bash "${BASEDIR}/get_SA_data.sh"
 
 echo remember to activate the environment using: source capstone/bin/activate before running any of the other scrips
 
