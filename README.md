@@ -37,7 +37,7 @@ FROM input_data
 > where `round_level` is given by `cast(5 - LOG(accuracy_m) as integer)`, i.e. accuracy_m=1000 -> round_level=2
 
 ### Installation
-The [requirements.txt](requirements.txt) file contains the python dependencies.  Please note from the point above that there are other libraries required! Specifically, linux users should install `libspatialindex-dev` and MacOS users: `spatialindex`.
+The [requirements.txt](requirements.txt) file contains the python dependencies.  Please note from the point above that there are other libraries required! Specifically, linux users should install `libspatialindex-dev` and MacOS users: `spatialindex`.  The `wget`, `zip`, and `unzip` libraries are also required in order to run the [get_SA_data.sh](get_SA_data.sh) script.
 > Install these packages _before_ you install the pip packages or you may run into trouble.
 
 The [setup.sh](setup.sh) script can be run to install the dependencies.  
