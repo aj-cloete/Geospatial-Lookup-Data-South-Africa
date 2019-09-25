@@ -102,6 +102,7 @@ geometries, geonames, postal_codes = load_raw_data()
 Our methodology involves generating a grid that covers the area of interest.  To that end, South Africa is bounded by latitudes in the range [-35,-22] and longitudes in the range [16,33].  We therefore generate the grid using those to sets with the command 
 ```python
 points_grid = gh.generate_grid(lats=[-35,-22], longs=[16,33], accuracy_m=1000, verbose=True)
+gh.check_grid(points_grid)
 ```
 
 > whenever you see the `gh.`, note that those are functions from the [geohelpers.py](geohelpers.py) file.
@@ -109,6 +110,7 @@ points_grid = gh.generate_grid(lats=[-35,-22], longs=[16,33], accuracy_m=1000, v
 Next, we look up the grid against the geometries - this is the crux of this repository.
 ```python 
 located_grid = gh.process_dataframe(points_grid, geometries, accuracy_m=1000, verbose=True)
+gh.check_grid(located_grid)
 ```
 
 > Note that the **geometries** dataframe contains a column named _geometry_ that is a [shapely](https://shapely.readthedocs.io/en/stable/manual.html) geometry Polygon and the grid contains a [shapely](https://shapely.readthedocs.io/en/stable/manual.html) geometry Point.  This allows us to find the geometry containing the point.
