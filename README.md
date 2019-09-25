@@ -90,9 +90,15 @@ The next step is running the [get_SA_data.sh](get_SA_data.sh) to download the ra
 #### Python script generating lookup datasets
 While you can simply run `python main.py` at this point, I'd like to walk you through the main steps.  You can replace the provided [main.py](main.py) sript with your own after understanding the steps.
 
-Go ahead and launch `python` and do one simple import: `from main import *` (make sure your working directory is the root of the repository)
+Go ahead and launch `python` and do one simple import: (make sure your working directory is the root of the repository)
+```python
+from main import *
+```
 
-We then load the data by running `geometries, geonames, postal_codes = load_raw_data()`
+We then load the source enrichment data by running 
+```python
+geometries, geonames, postal_codes = load_raw_data()
+```
 Our methodology involves generating a grid that covers the area of interest.  To that end, South Africa is bounded by latitudes in the range [-35,-22] and longitudes in the range [16,33].  We therefore generate the grid using those to sets with the command 
 ```python
 points_grid = gh.generate_grid(lats=[-35,-22], longs=[16,33], accuracy_m=1000, verbose=True)
