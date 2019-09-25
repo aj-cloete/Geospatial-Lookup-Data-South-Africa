@@ -72,6 +72,7 @@ The [get_SA_data.sh](get_SA_data.sh) file can be run to download the data.  It c
 You can read more about the South African data in the [data_dictionary.md](data_dictionary.md)
 
 ### The ETL process
+You can follow along here or have a look at the [Example notebook South Africa](Example notebook South Africa.ipynb) to see how the process works
 
 #### Shell script
 First thing you'll want to do is set up and enter your environment (see [setup.sh](setup.sh)) or docker image (see [Dockerfile](Dockerfile)).
@@ -96,6 +97,66 @@ Next, we look up the grid against the geometries - this is the crux of this repo
 located_grid = gh.process_dataframe(points_grid, geometries, accuracy_m=1000, verbose=True)
 ```
 
-> Note that the **geometries** dataframe contains a column names _geometry_ that is a [shapely](https://shapely.readthedocs.io/en/stable/manual.html) geometry Polygon and the grid contains a [shapely](https://shapely.readthedocs.io/en/stable/manual.html) geometry Point.  This allows us to find the geometry containing the point.
+> Note that the **geometries** dataframe contains a column named _geometry_ that is a [shapely](https://shapely.readthedocs.io/en/stable/manual.html) geometry Polygon and the grid contains a [shapely](https://shapely.readthedocs.io/en/stable/manual.html) geometry Point.  This allows us to find the geometry containing the point.
 
-With the lookup done, all that remains is decomposing the parts for use in a database.  You want to store an identifier to the geometries file (in our case **ward_id**) in the generated grid file, along with the lookup key.  This becomes the **locations** dataset.  In our case we have this **locations** table with four columns (`ward_id`,`geokey`,`latitude`,`longitude`) and N rows, where N depends on the chosen accuracy_m level.  
+With the lookup done, all that remains is decomposing the parts for use in a database.  You want to store an identifier to the geometries file (in our case **ward_id**) in the generated grid file, along with the lookup key.  This becomes the **grid** dataset.  In our case we have this **grid** table with four columns (`ward_id`,`geokey`,`latitude`,`longitude`) and N rows, where N depends on the chosen accuracy_m level.
+
+Next, we save the data by using the `gh.save_data` helper function.  It accepts a dictionary which will be used to filter and rename the columns to keep only the relevant ones.  We also decompose the table into two parts: the **grid** and the **wards** datasets and save each.
+
+```python
+grid_cols = {
+    'WardID':'ward_id',
+    'WardNumber':'ward_number',
+    'Shape_Length':'ward_length',
+    'Shape_Area':'ward_area',
+    'LocalMunicipalityName':'local_municipality',
+    'DistrictMunicipalityCode':'district_minicipal_code',
+    'DistrictMunicipalityName':'district_municipality',
+    'ProvinceName':'province_code',
+    'ProvinceCode':'province_name',
+    'geokey':'geokey',
+    'latitude':'latitude',
+    'longitude':'longitude'}
+grid = gh.save_data(located_grid, 'located_grid.json.gz','processed_data',columns=grid_cols)
+wards = grid.drop(columns=['geokey','latitude','longitude']).drop_duplicates()
+grid = grid[['geokey','ward_id','latitude','longitude']].drop_duplicates()
+gh.save_data(df=wards, filename='wards.json.gz', directory ='datasets')
+gh.save_data(df=grid, filename='grid.json.gz', directory ='datasets')
+```
+
+That concludes the processing and therefore the ETL.  Any new incoming data can be classified within a database using a combination of the **grid** and the **wards** data, as simulated below and generating sample data from Cape Town area:
+
+```python
+from main import *
+# generate the input data (on a higher level of accuracy - not unlike real-world location data coming in)
+incoming_data = gh.generate_grid(lats=[-34.5,-33.5], longs=[18,19], accuracy_m=10).sample(500)
+
+# generate the geokey on the new incoming data
+geokey = gh.generate_key(incoming_data, accuracy_m=1000)['geokey']
+incoming_data['geokey'] = geokey
+
+# read the grid and wards datasets (which could be stored in your database/warehouse)
+grid = pd.read_json('datasets/grid.json.gz')
+wards = pd.read_json('datasets/wards.json.gz')
+
+## the lookup steps
+# Step1 of the lookup process
+located = incoming_data.merge(grid, how='left', on='geokey')
+# Step2 of the lookup process
+final = located.merge(wards, how='left', on='ward_id')
+
+```
+
+And with that, we have successfully done a lookup of new incoming data and asserted in which wards the points lie - all without having to leave the comfort of our data warehouse.
+
+## Addressing scheduling and scaling
+
+#### Scaling
+The above examples show how powerful this methodology can be.  
+
+To make this scalable, the data should be housed in a database (like AWS RDS postgres) or warehouse (like AWS Redshift), where it can be accessible from anywhere in the world.  It could then easily be accessed by 100s of users simultaneously, each one looking up their own set of incoming data points.
+
+#### Scheduling
+If the data will be accessed frequently, or if the lookup data changes from time to time, it may be necessary to schedule the creation of the lookup datasets or the lookup process of new incoming data.
+
+One could, for example, schedule a job using Apache Airflow that runs once a day at 7:00, that looks up all the new location data against the generated lookup tables **grid** and **ward** and stores the results in a table called **locations_enriched**.  Each new day, the job would run, enrich the new location data from the day before and store the results in **location_enriched** where the data users can easily obtain the additional information without having to join to **grid** and **wards** again.
