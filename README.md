@@ -72,14 +72,14 @@ The [get_SA_data.sh](get_SA_data.sh) file can be run to download the data.  It c
 You can read more about the South African data in the [data_dictionary.md](data_dictionary.md)
 
 ### The ETL process
-You can follow along here or have a look at the [Example notebook South Africa](Example notebook South Africa.ipynb) to see how the process works
+#### You can follow along here or have a look at the [Example notebook South Africa](Example%20notebook%20South%20Africa.ipynb) to see how the process works.
 
 #### Shell script
 First thing you'll want to do is set up and enter your environment (see [setup.sh](setup.sh)) or docker image (see [Dockerfile](Dockerfile)).
 The next step is running the [get_SA_data.sh](get_SA_data.sh) to download the raw data into the **data** folder.  Do this before you continue to the python section.
 ``` ./get_SA_data.sh```
 
-#### Python script
+#### Python script generating lookup datasets
 While you can simply run `python main.py` at this point, I'd like to walk you through the main steps.  You can replace the provided [main.py](main.py) sript with your own after understanding the steps.
 
 Go ahead and launch `python` and do one simple import: `from main import *` (make sure your working directory is the root of the repository)
@@ -124,7 +124,11 @@ gh.save_data(df=wards, filename='wards.json.gz', directory ='datasets')
 gh.save_data(df=grid, filename='grid.json.gz', directory ='datasets')
 ```
 
-That concludes the processing and therefore the ETL.  Any new incoming data can be classified within a database using a combination of the **grid** and the **wards** data, as simulated below and generating sample data from Cape Town area:
+That concludes the processing and therefore the ETL.  
+
+#### Python script for looking up new location data
+
+Any new incoming data can be classified within a database using a combination of the **grid** and the **wards** data, as simulated below and generating sample data from Cape Town area:
 
 ```python
 from main import *
