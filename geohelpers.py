@@ -31,6 +31,7 @@ def generate_key(df, accuracy_m=1000, lats='latitude',longs='longitude'):
     print('Generating the geokey')
     # ensure that the lats and longs correspond with the selected accuracy
     round_level = int(5 - np.log10(accuracy_m))
+    df = df.copy()
     df[lats] = df[lats].round(round_level)
     df[longs] = df[longs].round(round_level)
     df['geokey'] = (df[lats]*100000).astype(int).astype(str) \
