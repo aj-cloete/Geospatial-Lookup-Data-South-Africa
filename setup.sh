@@ -10,13 +10,19 @@ _UNAME_OUT=$(uname -s)
 if [ $(which python)|grep conda ]; then
     echo "!! virus (anaconda) detected! Developing workaround..."
 fi
+
+if ! [ -x "$(command -v sudo)" ]; then
+  apt-get update && apt-get install sudo
+fi
+
 if [ ! -x /usr/local/bin/python3.7 ]; then
     case "${_UNAME_OUT}" in
         Linux*)
             sudo apt-get install build-essential checkinstall -y
             sudo apt-get install libreadline-gplv2-dev libncursesw5-dev libssl-dev \
                 libsqlite3-dev tk-dev libgdbm-dev libc6-dev libbz2-dev libffi-dev zlib1g-dev -y
-            sudo apt install libspatialindex-dev -y
+            sudo apt-get install libspatialindex-dev -y
+            sudo apt-get install -y wget zip unzip tar
             cd /usr/src
             sudo wget https://www.python.org/ftp/python/3.7.4/Python-3.7.4.tgz
             sudo tar xzf Python-3.7.4.tgz
