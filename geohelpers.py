@@ -92,9 +92,10 @@ def generate_grid(lats, longs, accuracy_m=1000, verbose=False):
         raise ValueError('accuracy_m must be one of these values: (1,10,100,1000,10000,100000)')
     
     steps = accuracy_m/100000
+
+    print('Generating point grid')
     lats = np.arange(np.min(lats), np.max(lats), steps)
     longs = np.arange(np.min(longs), np.max(longs), steps)
-    print('Generating point grid')
     ret = _generate_smaller_grid(lats,longs,accuracy_m,verbose).reset_index(drop=True)
     print(f'\nGrid of size {ret.shape} generated!')
     return ret
@@ -150,7 +151,7 @@ def locate_points(points, geometries, chunksize=None, verbose=False):
         print(f'{points.shape[0] - ret.shape[0]} points were not found within provided geometries!')
     return ret.reset_index(drop=True)
 
-def save_data(df, filename='filename.json.gz', directory='processed_data', columns=None):
+def save_data(df, filename='filename.json.gz', directory='processed_data', columns=None, skip_checks=True):
     '''
     Save the data in json records format, optionally only keeping certain columns
     df(dataframe): dataframe to save
@@ -177,6 +178,8 @@ def save_data(df, filename='filename.json.gz', directory='processed_data', colum
     full_pathname = os.path.join(directory,filename)
     print(f'Writing file at {full_pathname}')
     df.to_json(full_pathname,orient='records')
+    if not skip_checks:
+        check_first_col(df)
     return df
 
 def process_dataframe(df, geometries, accuracy_m=1000, chunksize=None, verbose=False):
@@ -185,3 +188,42 @@ def process_dataframe(df, geometries, accuracy_m=1000, chunksize=None, verbose=F
     df = generate_points_from_coordinates(df, chunksize)
     df = locate_points(df, geometries, chunksize, verbose)
     return df
+
+def check_table_key(df, key):
+    '''
+    Check that the key in the table is unique and not null.  Print warning if duplicates or nulls detected
+    df(dataframe): pandas-like dataframe to be checked
+    key(str/list): the column(s) in the df to be used as primary key of table
+    '''
+    if isinstance(key, str):
+        key = [key]
+    for key_col in key:
+        key_data = df[key_col]
+        if key_data.isnull().sum()!=0:
+            print(f'WARNING! Nulls discovered in {key_col}! This column is intended to be used as a key.')
+        elif key_data.nunique()!=df.shape[0]:
+            print(f'WARNING! Duplicates detected in {key_col}! This column is intended to be used as a key')
+        else:
+            print(f'Column {key_col} passed notnull and unique checks!')
+            return True
+
+def check_grid(grid):
+    '''
+    Check the generated grid and ensure that it is not empty.  Print warning if the grid is found to be empty.
+    '''
+    if grid.shape[0]==0:
+        print('WARNING! The grid contains no rows!')
+        print('This is likely caused by incorrect latitude/longitude ranges or')
+        print('by an incorrect accuracy_m setting.  Please double-check')
+    else:
+        print('Generated grid passed quality check!')
+
+def check_first_col(df):
+    '''
+    Checks the first column of dataset, assuming it is intended as the key of the table.
+    '''
+    first_col = list(df)[0]
+    passed = check_table_key(df, first_col)
+    if not passed:
+        print(f'First column ({first_col}) of dataset did not pass notnull and unique checks!')
+        print('-- double check column ordering')

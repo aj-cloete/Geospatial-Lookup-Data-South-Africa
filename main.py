@@ -49,11 +49,16 @@ def extract_names_datasets(located_geonames):
 def process_data(accuracy_m=1000, verbose=False):
     geometries, geonames, postal_codes = load_raw_data()
     points_grid = gh.generate_grid(lats=[-35,-22], longs=[16,33], accuracy_m=accuracy_m, verbose=verbose)
+    gh.check_grid(points_grid)
     
     print('\nProcessing the generated grid dataset')
     located_grid = gh.process_dataframe(points_grid, geometries, accuracy_m, verbose=verbose)
+    gh.check_grid(located_grid)
     del points_grid # free up RAM
     grid_cols = {
+        'geokey':'geokey',
+        'latitude':'latitude',
+        'longitude':'longitude',
         'WardID':'ward_id',
         'WardNumber':'ward_number',
         'Shape_Length':'ward_length',
@@ -62,10 +67,7 @@ def process_data(accuracy_m=1000, verbose=False):
         'DistrictMunicipalityCode':'district_minicipal_code',
         'DistrictMunicipalityName':'district_municipality',
         'ProvinceName':'province_code',
-        'ProvinceCode':'province_name',
-        'geokey':'geokey',
-        'latitude':'latitude',
-        'longitude':'longitude'}
+        'ProvinceCode':'province_name',}
     grid = gh.save_data(located_grid, 'located_grid.json.gz','processed_data',columns=grid_cols)
     wards = grid.drop(columns=['geokey','latitude','longitude']).drop_duplicates()
     grid = grid[['geokey','ward_id','latitude','longitude']].drop_duplicates()
@@ -74,16 +76,16 @@ def process_data(accuracy_m=1000, verbose=False):
     located_geonames = gh.process_dataframe(geonames, geometries, accuracy_m, verbose=verbose)
     geonames_cols = {
         'geonameid':'geoname_id',
+        'WardID':'ward_id',
+        'geokey':'geokey',
+        'latitude':'latitude',
+        'longitude':'longitude',
         'name':'name',
         'feature_class':'feature_class',
         'feature_code':'feature_code',
         'population':'population',
         'desc_short':'desc_short',
         'desc_long':'desc_long',
-        'geokey':'geokey',
-        'WardID':'ward_id',
-        'latitude':'latitude',
-        'longitude':'longitude',
         }
     located_geonames = located_geonames[list(geonames_cols)]
     located_geonames['desc_long'] = located_geonames['desc_long'].fillna(located_geonames['desc_short'])
@@ -94,16 +96,17 @@ def process_data(accuracy_m=1000, verbose=False):
     print('\nProcessing the postal_codes dataset')
     located_postal_codes = gh.process_dataframe(postal_codes, geometries, accuracy_m, verbose=verbose)
     postal_code_cols = {
+        'geokey':'geokey',
+        'WardID':'ward_id',
         'postal_code':'postal_code',
         'place_name':'place_name',
         'latitude':'latitude',
         'longitude':'longitude',
-        'geokey':'geokey',
-        'WardID':'ward_id',
         }
     postal_codes_dataset = gh.save_data(located_postal_codes,
                                         'located_postal_codes.json.gz',
-                                        'processed_data',columns=postal_code_cols)
+                                        'processed_data',columns=postal_code_cols, 
+                                        skip_checks=True)
 
     print('\nSaving datasets')
     gh.save_data(df=postal_codes_dataset, filename='postal_codes.json.gz', directory='datasets')
